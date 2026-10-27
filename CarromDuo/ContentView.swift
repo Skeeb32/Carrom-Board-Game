@@ -143,6 +143,21 @@ struct ContentView: View {
                         }
                         .buttonStyle(.plain)
 
+                        Button(action: enterDemoGame) {
+                            HStack(spacing: 9) {
+                                Image(systemName: "person.crop.circle.badge.checkmark")
+                                    .font(.system(size: 14, weight: .semibold))
+                                Text("Play as Demo Player")
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                            }
+                            .foregroundStyle(.white.opacity(0.88))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 42)
+                            .background(.black.opacity(0.22), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(gold.opacity(0.34), lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+
                         Button { arcadeInfo = true } label: {
                             HStack(spacing: 7) {
                                 Image(systemName: "gamecontroller.fill")
@@ -298,6 +313,12 @@ struct ContentView: View {
     private func beginLoading() {
         screen = .loading
         restartGame()
+    }
+
+    private func enterDemoGame() {
+        playerName = "Demo Player"
+        restartGame()
+        screen = .game
     }
 
     private var gameScreen: some View {

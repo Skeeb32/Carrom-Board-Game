@@ -15,6 +15,6 @@ Open `CarromDuo.xcodeproj` in Xcode 27.1 or later, select the CarromDuo scheme a
 
 ## Welcome and accounts
 
-The launch screen includes Sign in with Apple, an email sign-in/create-account form, an Apple Arcade information path, and a short animated board-loading screen. Sign in with Apple is wired to AuthenticationServices and the project includes its capability entitlement. Email account creation is currently a local UI prototype only; it does not send credentials or create a server account. Apple Arcade is a subscription tied to an Apple Account rather than a separate game login.
+The launch screen includes Sign in with Apple, an email sign-in/create-account form, a one-tap Demo Player bypass, an Apple Arcade information path, and a short animated board-loading screen. Sign in with Apple is wired to AuthenticationServices and the project includes its capability entitlement. Email account creation is currently a local UI prototype only; it does not send credentials or create a server account. The demo bypass uses a local display name and stores no credentials. Apple Arcade is a subscription tied to an Apple Account rather than a separate game login.
 
 This is an initial playable rules prototype; match-end / full tournament rules and final art/audio are future work.
