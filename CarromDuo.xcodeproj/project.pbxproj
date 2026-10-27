@@ -1,0 +1,32 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+		A10000000000000000000001 /* CarromDuo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CarromDuo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000002 /* CarromDuoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarromDuoApp.swift; sourceTree = "<group>"; };
+		A10000000000000000000003 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A10000000000000000000004 /* CarromScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarromScene.swift; sourceTree = "<group>"; };
+		A10000000000000000000005 /* GameMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMode.swift; sourceTree = "<group>"; };
+		A10000000000000000000006 /* Sources */ = {isa = PBXGroup; children = (A10000000000000000000002, A10000000000000000000003, A10000000000000000000004, A10000000000000000000005,); path = CarromDuo; sourceTree = "<group>"; };
+		A10000000000000000000007 /* Products */ = {isa = PBXGroup; children = (A10000000000000000000001,); name = Products; sourceTree = "<group>"; };
+		A10000000000000000000008 /* Project */ = {isa = PBXGroup; children = (A10000000000000000000006, A10000000000000000000007,); sourceTree = "<group>"; };
+		A10000000000000000000009 /* CarromDuo */ = {isa = PBXNativeTarget; buildConfigurationList = A10000000000000000000010; buildPhases = (A10000000000000000000011, A10000000000000000000012, A10000000000000000000013,); buildRules = (); dependencies = (); name = CarromDuo; productName = CarromDuo; productReference = A10000000000000000000001; productType = "com.apple.product-type.application"; };
+		A10000000000000000000010 = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000020, A10000000000000000000021,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A10000000000000000000011 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000031, A10000000000000000000032, A10000000000000000000033, A10000000000000000000034,); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000012 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000013 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000014 /* Project */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 2710; TargetAttributes = {A10000000000000000000009 = {CreatedOnToolsVersion = 27.1; };};}; buildConfigurationList = A10000000000000000000015; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base,); mainGroup = A10000000000000000000008; productRefGroup = A10000000000000000000007; projectDirPath = ""; projectRoot = ""; targets = (A10000000000000000000009,); };
+		A10000000000000000000015 = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000022, A10000000000000000000023,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A10000000000000000000020 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = CarromDuo; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games"; INFOPLIST_KEY_UILaunchScreen_Generation = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.skeebkhan.CarromDuo; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2";}; name = Debug; };
+		A10000000000000000000021 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = CarromDuo; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games"; INFOPLIST_KEY_UILaunchScreen_Generation = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.skeebkhan.CarromDuo; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2";}; name = Release; };
+		A10000000000000000000022 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0;}; name = Debug; };
+		A10000000000000000000023 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0;}; name = Release; };
+		A10000000000000000000031 /* CarromDuoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002; };
+		A10000000000000000000032 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003; };
+		A10000000000000000000033 /* CarromScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004; };
+		A10000000000000000000034 /* GameMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005; };
+	};
+	rootObject = A10000000000000000000014;
+}
