@@ -8,6 +8,8 @@ final class CarromScene: SKScene, SKPhysicsContactDelegate {
     private var striker: SKShapeNode!
     private var aimLine: SKShapeNode?
     private var dragOrigin: CGPoint?
+    private var dragTouchOrigin: CGPoint?
+    private var baselineRepositioning = false
     private var shotActive = false
     private var shotPots: [String] = []
     private var pocketEvents: [PocketEvent] = []
@@ -232,18 +234,42 @@ final class CarromScene: SKScene, SKPhysicsContactDelegate {
         let p = t.location(in: self)
         guard striker.contains(p) || hypot(p.x - striker.position.x, p.y - striker.position.y) < 44 else { return }
         dragOrigin = striker.position
+        dragTouchOrigin = p
+        baselineRepositioning = false
         updateAim(to: p)
     }
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard !shotActive, dragOrigin != nil, let p = touches.first?.location(in: self) else { return }
-        let dx = p.x - striker.position.x, dy = p.y - striker.position.y
-        // Pull back to aim; horizontal movement repositions along the active baseline.
-        if abs(dx) > 20 && abs(dy) < 32 { striker.position.x = nearestOnBaseline(p.x) }
+        guard !shotActive,
+              let start = dragTouchOrigin,
+              dragOrigin != nil,
+              let p = touches.first?.location(in: self) else { return }
+        let horizontalTravel = p.x - start.x
+        let verticalTravel = p.y - start.y
+
+        // A mostly horizontal drag is striker placement along the player's line.
+        // Keep it on the baseline and don't interpret tiny finger drift as a shot.
+        if abs(horizontalTravel) > 20 && abs(verticalTravel) < 32 {
+            baselineRepositioning = true
+            striker.position = CGPoint(x: nearestOnBaseline(p.x), y: baselineY)
+        }
         updateAim(to: p)
     }
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        defer { dragOrigin = nil; aimLine?.removeFromParent(); aimLine = nil }
+        let wasBaselineRepositioning = baselineRepositioning
+        let touchStart = dragTouchOrigin
+        defer {
+            dragOrigin = nil
+            dragTouchOrigin = nil
+            baselineRepositioning = false
+            aimLine?.removeFromParent()
+            aimLine = nil
+        }
         guard !shotActive, dragOrigin != nil, let p = touches.first?.location(in: self) else { return }
+        if wasBaselineRepositioning,
+           let touchStart,
+           abs(p.y - touchStart.y) < 32 {
+            return
+        }
         let dx = striker.position.x - p.x, dy = striker.position.y - p.y
         let distance = hypot(dx, dy)
         guard distance > ShotPhysics.minimumPull else { return }
@@ -252,6 +278,13 @@ final class CarromScene: SKScene, SKPhysicsContactDelegate {
         let response = pow(progress, ShotPhysics.powerCurve)
         let impulse = ShotPhysics.minimumImpulse + (ShotPhysics.maximumImpulse - ShotPhysics.minimumImpulse) * response
         beginShot(CGVector(dx: dx / distance * impulse, dy: dy / distance * impulse))
+    }
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        dragOrigin = nil
+        dragTouchOrigin = nil
+        baselineRepositioning = false
+        aimLine?.removeFromParent()
+        aimLine = nil
     }
     private func updateAim(to p: CGPoint) {
         aimLine?.removeFromParent()
