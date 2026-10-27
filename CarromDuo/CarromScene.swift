@@ -19,6 +19,15 @@ final class CarromScene: SKScene, SKPhysicsContactDelegate {
     var onUpdate: ((MatchSnapshot) -> Void)?
     private var snapshot = MatchSnapshot()
 
+    private enum ShotPhysics {
+        static let minimumPull: CGFloat = 8
+        static let maximumPull: CGFloat = 150
+        static let minimumImpulse: CGFloat = 95
+        static let maximumImpulse: CGFloat = 900
+        static let computerImpulse: CGFloat = 580
+        static let powerCurve: CGFloat = 1.2
+    }
+
     override init(size: CGSize) {
         super.init(size: size)
         configureScene()
@@ -163,7 +172,7 @@ final class CarromScene: SKScene, SKPhysicsContactDelegate {
         node.lineWidth = 2; node.zPosition = 5
         let body = SKPhysicsBody(circleOfRadius: radius)
         body.mass = 0.8; body.restitution = 0.82; body.friction = 0.16
-        body.linearDamping = 0.48; body.angularDamping = 0.6
+        body.linearDamping = 0.22; body.angularDamping = 0.4
         body.categoryBitMask = Mask.coin; body.collisionBitMask = Mask.coin | Mask.striker | Mask.wall
         node.physicsBody = body; addChild(node)
     }
@@ -174,7 +183,7 @@ final class CarromScene: SKScene, SKPhysicsContactDelegate {
         striker.strokeColor = .white; striker.lineWidth = 3; striker.name = "striker"
         striker.zPosition = 8
         let body = SKPhysicsBody(circleOfRadius: 19)
-        body.mass = 1.7; body.restitution = 0.82; body.friction = 0.12; body.linearDamping = 0.45
+        body.mass = 1.7; body.restitution = 0.82; body.friction = 0.12; body.linearDamping = 0.18
         body.categoryBitMask = Mask.striker; body.collisionBitMask = Mask.coin | Mask.striker | Mask.wall
         striker.physicsBody = body; addChild(striker); resetStriker()
     }
@@ -206,8 +215,12 @@ final class CarromScene: SKScene, SKPhysicsContactDelegate {
         guard !shotActive, dragOrigin != nil, let p = touches.first?.location(in: self) else { return }
         let dx = striker.position.x - p.x, dy = striker.position.y - p.y
         let distance = hypot(dx, dy)
-        guard distance > 8 else { return }
-        beginShot(CGVector(dx: dx / distance * min(distance, 175) * 0.34, dy: dy / distance * min(distance, 175) * 0.34))
+        guard distance > ShotPhysics.minimumPull else { return }
+        let pull = min(distance, ShotPhysics.maximumPull)
+        let progress = (pull - ShotPhysics.minimumPull) / (ShotPhysics.maximumPull - ShotPhysics.minimumPull)
+        let response = pow(progress, ShotPhysics.powerCurve)
+        let impulse = ShotPhysics.minimumImpulse + (ShotPhysics.maximumImpulse - ShotPhysics.minimumImpulse) * response
+        beginShot(CGVector(dx: dx / distance * impulse, dy: dy / distance * impulse))
     }
     private func updateAim(to p: CGPoint) {
         aimLine?.removeFromParent()
@@ -291,7 +304,7 @@ final class CarromScene: SKScene, SKPhysicsContactDelegate {
         let norm = max(hypot(vx, vy), 1)
         let aim = CGPoint(x: target.position.x + vx / norm * 31, y: target.position.y + vy / norm * 31)
         let dx = aim.x - striker.position.x, dy = aim.y - striker.position.y, d = max(hypot(dx,dy),1)
-        beginShot(CGVector(dx: dx / d * 51, dy: dy / d * 51))
+        beginShot(CGVector(dx: dx / d * ShotPhysics.computerImpulse, dy: dy / d * ShotPhysics.computerImpulse))
     }
     func restart() {
         removeAllActions(); removeAllChildren(); shotActive = false; queenPendingFor = nil

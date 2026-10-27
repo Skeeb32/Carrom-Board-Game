@@ -10,6 +10,7 @@ Open `CarromDuo.xcodeproj` in Xcode 27.1 or later, select the CarromDuo scheme a
 
 - Choose pass-and-play or play against the computer.
 - Drag back from the striker and release to shoot. Drag horizontally on the baseline to reposition the striker.
+- Shot strength rises smoothly with pullback distance and is capped for consistent full-power shots.
 - A potted own coin scores one point and earns another shot. Pocketing the queen requires an own coin on the same or next shot; a queen that is not covered returns to center.
 - Pocketing the striker is a foul and deducts one point.
 
