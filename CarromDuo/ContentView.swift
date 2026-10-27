@@ -2,7 +2,7 @@ import AuthenticationServices
 import SwiftUI
 import SpriteKit
 
-private enum AppScreen {
+private enum AppScreen: Equatable {
     case welcome, email, loading, game
 }
 
@@ -14,10 +14,12 @@ struct ContentView: View {
     @State private var arcadeInfo = false
     @State private var authMessage: String?
     @State private var playerName = "Player"
-    @State private var email = ""
-    @State private var password = ""
-    @State private var fullName = ""
-    @State private var creatingAccount = true
+    @StateObject private var audio = GameAudioManager()
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    #if DEBUG
+    @State private var didApplyUITestScenario = false
+    #endif
     private let gold = Color(red: 0.96, green: 0.70, blue: 0.33)
     private let walnut = Color(red: 0.17, green: 0.085, blue: 0.045)
 
@@ -31,12 +33,19 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .animation(.easeInOut(duration: 0.3), value: screen)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: screen)
         .onChange(of: mode) { _, _ in restartGame() }
+        .onAppear { connectScene(); updateMusic() }
+        .onChange(of: screen) { _, _ in updateMusic() }
+        .onChange(of: scenePhase) { _, phase in
+            scene.isPaused = phase != .active || screen != .game
+            audio.setApplicationActive(phase == .active)
+        }
+        .task { await applyUITestScenarioIfNeeded() }
         .alert("Apple Arcade", isPresented: $arcadeInfo) {
             Button("Got it", role: .cancel) { }
         } message: {
-            Text("Apple Arcade uses the Apple Account connected to Media & Purchases; it doesn't have a separate game sign-in. Carrom Duo is currently a standalone game prototype, so Arcade membership checking will be connected if the game is published on Apple Arcade.")
+            Text("Carrom Duo is a standalone game preview and is not currently part of Apple Arcade. An Apple Arcade subscription does not unlock additional features in this build.")
         }
         .alert("Sign-in didn’t finish", isPresented: Binding(
             get: { authMessage != nil },
@@ -86,6 +95,7 @@ struct ContentView: View {
                             .padding(.horizontal, 10)
                             .padding(.vertical, 7)
                             .background(.black.opacity(0.3), in: Capsule())
+                        GameAudioControls(audio: audio)
                     }
                     .padding(.top, 8)
 
@@ -132,7 +142,7 @@ struct ContentView: View {
                             HStack(spacing: 10) {
                                 Image(systemName: "envelope.fill")
                                     .font(.system(size: 14, weight: .semibold))
-                                Text("Continue with Email")
+                            Text("Email sign-in · coming soon")
                                     .font(.system(size: 15, weight: .bold, design: .rounded))
                             }
                             .foregroundStyle(.white)
@@ -157,11 +167,12 @@ struct ContentView: View {
                             .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(gold.opacity(0.34), lineWidth: 1))
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("demo-play")
 
                         Button { arcadeInfo = true } label: {
                             HStack(spacing: 7) {
                                 Image(systemName: "gamecontroller.fill")
-                                Text("Apple Arcade member?")
+                                Text("About Apple Arcade")
                                     .underline(pattern: .solid, color: gold.opacity(0.8))
                             }
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -171,7 +182,7 @@ struct ContentView: View {
                         }
                         .buttonStyle(.plain)
 
-                        Text("By continuing, you agree to our Terms and Privacy Policy.")
+                        Text("Guest play is available without an account.")
                             .font(.system(size: 9, weight: .medium))
                             .foregroundStyle(.white.opacity(0.55))
                             .multilineTextAlignment(.center)
@@ -194,94 +205,43 @@ struct ContentView: View {
         ZStack {
             Image("HomeBoard").resizable().scaledToFill().ignoresSafeArea()
                 .overlay(walnut.opacity(0.83).ignoresSafeArea())
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Button { screen = .welcome } label: {
-                        Label("Back", systemImage: "chevron.left")
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.84))
-                    }.buttonStyle(.plain)
+            VStack(alignment: .leading, spacing: 22) {
+                Button { screen = .welcome } label: {
+                    Label("Back", systemImage: "chevron.left")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.84))
+                }
+                .buttonStyle(.plain)
 
-                    VStack(alignment: .leading, spacing: 7) {
-                        Text(creatingAccount ? "MAKE IT YOURS." : "WELCOME BACK.")
-                            .font(.system(size: 30, weight: .black, design: .rounded))
-                            .tracking(-0.6)
-                            .foregroundStyle(.white)
-                        Text(creatingAccount ? "Create your player profile and pull up a chair." : "Your next match is waiting.")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.7))
-                    }
+                Spacer()
+                Image(systemName: "envelope.badge")
+                    .font(.system(size: 34, weight: .medium))
+                    .foregroundStyle(gold)
+                    .accessibilityHidden(true)
+                Text("EMAIL SIGN-IN\nISN’T CONNECTED YET.")
+                    .font(.system(size: 29, weight: .black, design: .rounded))
+                    .tracking(-0.6)
+                    .foregroundStyle(.white)
+                Text("There’s no Carrom Duo account service in this preview. You don’t need an email or password to play.")
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.72))
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    VStack(spacing: 12) {
-                        if creatingAccount {
-                            inputField("Your name", text: $fullName, icon: "person")
-                                .textContentType(.name)
-                        }
-                        inputField("Email address", text: $email, icon: "envelope")
-                            .textContentType(.emailAddress)
-                            .keyboardType(.emailAddress)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                        inputField("Password", text: $password, icon: "lock", secure: true)
-                            .textContentType(creatingAccount ? .newPassword : .password)
-                    }
-
-                    Button(action: submitEmail) {
-                        HStack {
-                            Text(creatingAccount ? "Create Account" : "Sign In")
-                            Spacer()
-                            Image(systemName: "arrow.right")
-                        }
+                Button(action: enterDemoGame) {
+                    Label("Play as Demo Player", systemImage: "person.crop.circle.badge.checkmark")
                         .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundStyle(walnut)
-                        .padding(.horizontal, 18)
-                        .frame(height: 54)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 54)
                         .background(gold, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-
-                    HStack(spacing: 4) {
-                        Text(creatingAccount ? "Already have an account?" : "New to Carrom Duo?")
-                            .foregroundStyle(.white.opacity(0.62))
-                        Button(creatingAccount ? "Sign in" : "Create one") {
-                            withAnimation(.easeInOut(duration: 0.2)) { creatingAccount.toggle() }
-                        }
-                        .fontWeight(.bold)
-                        .foregroundStyle(gold)
-                    }
-                    .font(.system(size: 13, design: .rounded))
-                    .frame(maxWidth: .infinity)
-
-                    Text("Account screens are ready for the game service connection. This preview does not send or store your password.")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.48))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 12)
                 }
-                .padding(22)
-                .frame(maxWidth: 470)
-                .frame(maxWidth: .infinity, alignment: .center)
+                .buttonStyle(.plain)
+                Spacer()
             }
+            .padding(24)
+            .frame(maxWidth: 470)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
-    }
-
-    private func inputField(_ title: String, text: Binding<String>, icon: String, secure: Bool = false) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon).font(.system(size: 15, weight: .semibold)).foregroundStyle(gold)
-            Group {
-                if secure {
-                    SecureField(title, text: text)
-                } else {
-                    TextField(title, text: text)
-                }
-            }
-            .font(.system(size: 14, weight: .medium, design: .rounded))
-            .foregroundStyle(.white)
-        }
-        .padding(.horizontal, 15)
-        .frame(height: 54)
-        .background(.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(.white.opacity(0.14), lineWidth: 1))
     }
 
     private var loadingScreen: some View {
@@ -291,23 +251,6 @@ struct ContentView: View {
                 guard !Task.isCancelled else { return }
                 screen = .game
             }
-    }
-
-    private func submitEmail() {
-        guard email.contains("@"), email.split(separator: "@").last?.contains(".") == true else {
-            authMessage = "Enter a valid email address to continue."
-            return
-        }
-        guard password.count >= 6 else {
-            authMessage = "Use a password with at least six characters."
-            return
-        }
-        if creatingAccount && fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            authMessage = "Add a name for your player profile."
-            return
-        }
-        playerName = creatingAccount ? fullName : String(email.split(separator: "@").first ?? "Player")
-        beginLoading()
     }
 
     private func beginLoading() {
@@ -342,13 +285,23 @@ struct ContentView: View {
                     }.padding(.horizontal, 14).padding(.vertical, 8)
                 }
             }
+            .allowsHitTesting(match.winner == nil)
+            .accessibilityHidden(match.winner != nil)
         }
+        .overlay {
+            if let winner = match.winner {
+                GameResultOverlay(winner: winner, scores: match.scores, mode: mode,
+                                  playerName: playerName, playAgain: restartGame, backHome: returnHome)
+            }
+        }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: match.winner)
         .onAppear { connectScene() }
     }
 
     private var header: some View {
         VStack(spacing: 2) {
             Text("CARROM DUO").font(.system(size: 26, weight: .black, design: .rounded)).tracking(4).foregroundStyle(gold)
+                .lineLimit(2).minimumScaleFactor(0.65)
             Text(mode == .twoPlayers ? "PASS & PLAY" : "PLAYER VS COMPUTER").font(.system(size: 10, weight: .bold)).tracking(2.5).foregroundStyle(.white.opacity(0.58))
         }
     }
@@ -359,27 +312,52 @@ struct ContentView: View {
         }.aspectRatio(1, contentMode: .fit).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     private var sidePanel: some View {
-        VStack(spacing: 22) {
-            header
-            playerCard(1); playerCard(2)
-            Text(match.status).font(.system(size: 13, weight: .medium)).foregroundStyle(.white.opacity(0.75)).multilineTextAlignment(.center)
-            modeAndRestart
-            Spacer(minLength: 0)
-        }.padding(8)
+        ScrollView {
+            VStack(spacing: 16) {
+                header
+                playerCard(1); playerCard(2)
+                Text(match.status).font(.system(size: 13, weight: .medium)).foregroundStyle(.white.opacity(0.75)).multilineTextAlignment(.center)
+                modeAndRestart
+            }.padding(8)
+        }.scrollIndicators(.hidden)
     }
     private var modeAndRestart: some View {
         VStack(spacing: 9) {
             Picker("Game mode", selection: $mode) {
                 ForEach(GameMode.allCases) { item in Text(item.rawValue).tag(item) }
             }.pickerStyle(.segmented)
-            Button(action: restartGame) {
-                Label("New Game", systemImage: "arrow.counterclockwise")
-                    .font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
-                    .frame(maxWidth: .infinity).padding(.vertical, 12)
-                    .background(Color(red: 0.38, green: 0.21, blue: 0.11), in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(gold.opacity(0.45), lineWidth: 1))
-            }.buttonStyle(.plain)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    newGameButton.frame(minWidth: 120)
+                    homeButton
+                    GameAudioControls(audio: audio)
+                }
+                VStack(spacing: 8) {
+                    newGameButton
+                    HStack {
+                        homeButton
+                        Spacer()
+                        GameAudioControls(audio: audio)
+                    }
+                }
+            }
         }
+    }
+    private var newGameButton: some View {
+        Button(action: restartGame) {
+            Label("New Game", systemImage: "arrow.counterclockwise")
+                .font(.system(size: 14, weight: .bold)).foregroundStyle(.white).lineLimit(1)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(Color(red: 0.38, green: 0.21, blue: 0.11), in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(gold.opacity(0.45), lineWidth: 1))
+        }.buttonStyle(.plain).accessibilityIdentifier("new-game")
+    }
+    private var homeButton: some View {
+        Button(action: returnHome) {
+            Image(systemName: "house.fill").foregroundStyle(gold).frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain).accessibilityLabel("Home screen").accessibilityIdentifier("home-button")
     }
     private func playerCard(_ player: Int) -> some View {
         let active = match.currentPlayer == player
@@ -387,6 +365,7 @@ struct ContentView: View {
         return VStack(spacing: 4) {
             Text(label).font(.system(size: 10, weight: .bold)).tracking(0.7).lineLimit(1).minimumScaleFactor(0.8)
             Text("\(match.scores[player - 1])").font(.system(size: 24, weight: .bold, design: .rounded).monospacedDigit())
+                .accessibilityIdentifier("score-\(player)")
             Text(active ? (player == 2 && mode == .computer ? "THINKING" : "YOUR TURN") : "WAITING")
                 .font(.system(size: 9, weight: .heavy)).tracking(1).foregroundStyle(active ? gold : .white.opacity(0.38))
         }
@@ -397,10 +376,46 @@ struct ContentView: View {
     private func connectScene() {
         scene.computerOpponent = mode == .computer
         scene.onUpdate = { value in match = value }
+        scene.onEvent = { event in audio.handle(event, mode: mode) }
     }
     private func restartGame() {
-        scene.computerOpponent = mode == .computer
+        connectScene()
+        scene.isPaused = screen != .game || scenePhase != .active
         scene.restart(); match = MatchSnapshot()
+        if screen == .game { audio.beginMatch() }
+    }
+    private func returnHome() {
+        scene.isPaused = true
+        scene.restart()
+        match = MatchSnapshot()
+        audio.returnHome()
+        screen = .welcome
+    }
+    private func updateMusic() {
+        scene.isPaused = screen != .game || scenePhase != .active
+        if screen == .game {
+            if match.winner == nil { audio.beginMatch() }
+        } else {
+            audio.transition(to: .home)
+        }
+    }
+    private func applyUITestScenarioIfNeeded() async {
+        #if DEBUG
+        let environment = ProcessInfo.processInfo.environment
+        guard !didApplyUITestScenario, environment["CARROM_UI_TEST"] == "1" else { return }
+        didApplyUITestScenario = true
+        audio.musicEnabled = true
+        audio.effectsEnabled = true
+        mode = .computer
+        enterDemoGame()
+        // Exercise the real match-resolution path after SwiftUI applies mode changes.
+        try? await Task.sleep(for: .milliseconds(500))
+        if let result = environment["CARROM_UI_RESULT"] {
+            let player = result == "win" ? 1 : 2
+            scene.debugResolveRuleShot(pocketedTypes: [player == 1 ? "white" : "black"],
+                                       player: player, previouslyPocketedOwn: 8)
+        }
+        #endif
     }
 }
 

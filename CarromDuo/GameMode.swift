@@ -10,4 +10,5 @@ struct MatchSnapshot {
     var scores = [0, 0]
     var currentPlayer = 1
     var status = "Drag back from the striker, then release to shoot."
+    var winner: Int?
 }
