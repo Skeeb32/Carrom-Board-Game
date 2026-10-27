@@ -13,4 +13,8 @@ Open `CarromDuo.xcodeproj` in Xcode 27.1 or later, select the CarromDuo scheme a
 - A potted own coin scores one point and earns another shot. Pocketing the queen requires an own coin on the same or next shot; a queen that is not covered returns to center.
 - Pocketing the striker is a foul and deducts one point.
 
+## Welcome and accounts
+
+The launch screen includes Sign in with Apple, an email sign-in/create-account form, an Apple Arcade information path, and a short animated board-loading screen. Sign in with Apple is wired to AuthenticationServices and the project includes its capability entitlement. Email account creation is currently a local UI prototype only; it does not send credentials or create a server account. Apple Arcade is a subscription tied to an Apple Account rather than a separate game login.
+
 This is an initial playable rules prototype; match-end / full tournament rules and final art/audio are future work.
